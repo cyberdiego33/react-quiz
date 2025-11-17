@@ -16,12 +16,20 @@ const FinishedScreen = function ({ points, maxPoints, highscore, dispatch }) {
         {Math.ceil(percent)}%)
       </p>
       <p className="text-xl">(Highscore: {highscore} points)</p>
-      <button
-        className="btn-ui text-xl cursor-pointer rounded-full px-4 py-2 bg-(--color-dark) border-2 border-(--color-dark) w-fit"
-        onClick={() => dispatch({ type: "restart" })}
-      >
-        Restart quiz
-      </button>
+      <div className="flex justify-between items-center space-x-4">
+        <button // this button no longer works when thhe timer ends
+          className="btn-ui text-xl cursor-pointer rounded-full px-4 py-2 bg-(--color-dark) border-2 border-(--color-dark) w-fit"
+          onClick={() => dispatch({ type: "review" })}
+        >
+          Review answers
+        </button>
+        <button
+          className="btn-ui text-xl cursor-pointer rounded-full px-4 py-2 bg-(--color-dark) border-2 border-(--color-dark) w-fit"
+          onClick={() => dispatch({ type: "restart" })}
+        >
+          Restart quiz
+        </button>
+      </div>
     </div>
   );
 };

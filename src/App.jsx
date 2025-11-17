@@ -25,9 +25,13 @@ const initialState = {
   points: 0,
   highscore: 0,
   secondsCount: null,
+
+  answeredQuestion: [],
+  // answeredQuestion: [],
+  review: false,
 };
 
-const SECS_PER_QUESTION = 2;
+const SECS_PER_QUESTION = 30;
 
 const reducer = function (state, action) {
   switch (action.type) {
@@ -38,18 +42,25 @@ const reducer = function (state, action) {
       return { ...state, status: "error" };
 
     case "start": // User clicks start, opens questions
+      console.log("From the start", state.answeredQuestion[state.index]);
       return {
         ...state,
         status: "active",
         secondsCount: state.questions.length * SECS_PER_QUESTION,
+        // wasn't here
+        // answer:
+        //   state.answeredQuestion[0] === undefined
+        //     ? null
+        //     : state.answeredQuestion[0],
       };
 
     case "newAnswer": // User chooses an answer
-      const question = state.questions[state.index];
+      const question = state.questions[state.index]; // I am getting warning here: Unexpected lexical declaration in case block. but its not affecting anything
 
       return {
         ...state,
         answer: action.payload,
+        answeredQuestion: [...state.answeredQuestion, action.payload], // wasn't here
         points:
           action.payload === question.correctOption
             ? state.points + question.points
@@ -57,7 +68,24 @@ const reducer = function (state, action) {
       };
 
     case "nextQuestion":
-      return { ...state, index: state.index + 1, answer: null, highscore: 30 };
+      console.log(
+        "from next question",
+        state.index + 1,
+        state.answeredQuestion[state.index + 1]
+      );
+      return {
+        ...state,
+        index: state.index + 1,
+        // formally just answer: null
+        answer: state.review ? state.answeredQuestion[state.index + 1] : null,
+      };
+    case "previousQuestion":
+      return {
+        ...state,
+        index: state.index - 1,
+        // formally just answer: null
+        answer: state.review ? state.answeredQuestion[state.index - 1] : null,
+      };
     case "finished":
       return {
         ...state,
@@ -67,11 +95,18 @@ const reducer = function (state, action) {
       };
     case "restart":
       return { ...initialState, questions: state.questions, status: "ready" };
+    case "review": // new case I added so users can see their previous answers
+      return {
+        ...state,
+        index: 0,
+        status: "active",
+        answer: state.answeredQuestion[0] ?? null,
+        review: true,
+      };
     case "ticking":
       return {
         ...state,
         secondsCount: state.secondsCount - 1,
-        // status: state.secondsCount === 0 ? "finished" : state.status,
       };
     default:
       throw new Error("Action is unknown");
@@ -80,7 +115,16 @@ const reducer = function (state, action) {
 
 const App = function () {
   const [
-    { questions, status, index, answer, points, highscore, secondsCount },
+    {
+      questions,
+      status,
+      index,
+      answer,
+      points,
+      highscore,
+      secondsCount,
+      review,
+    },
     dispatch,
   ] = useReducer(reducer, initialState);
 
@@ -90,9 +134,8 @@ const App = function () {
   useEffect(function () {
     const fetchFunction = async function () {
       try {
-        console.log("Starting fetch");
-        const response = await fetch("http://localhost:8000/questions");
-        const data = await response.json();
+        const response = await fetch("./data/questions.json");
+        const { questions: data } = await response.json();
         dispatch({ type: "dataRecieved", payload: data });
       } catch {
         dispatch({ type: "dataFailed" });
@@ -130,7 +173,12 @@ const App = function () {
                 />
               </QuestionsCom>
               <Footer>
-                <Timer dispatch={dispatch} secondsCount={secondsCount} />
+                <Timer
+                  dispatch={dispatch}
+                  review={review}
+                  secondsCount={secondsCount}
+                  index={index}
+                />
                 <NextButton
                   dispatch={dispatch}
                   answer={answer}
