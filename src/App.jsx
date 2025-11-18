@@ -134,7 +134,7 @@ const App = function () {
   useEffect(function () {
     const fetchFunction = async function () {
       try {
-        const response = await fetch("./data/questions.json");
+        const response = await fetch("/data/questions.json");
         const { questions: data } = await response.json();
         dispatch({ type: "dataRecieved", payload: data });
       } catch {
